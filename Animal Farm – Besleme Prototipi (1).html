@@ -1,0 +1,569 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Animal Farm – Besleme Prototipi</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;800&family=Figtree:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#e6efdc; --panel:#f6faf0; --ink:#1f3329; --muted:#5c7266; --line:#c5d4b8;
+  --auri:#b8860b; --star:#3a6fd8; --egg:#8a6d3b; --bar:#6aa84f; --barbg:#d6e3c9;
+  --btn:#2e5e43; --btnink:#f6faf0; --bird:#7a5a3a; --bird2:#5a3f26; --warn:#b3402c;
+  color-scheme:light; box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#16241d; --panel:#1f3329; --ink:#e8f1e2; --muted:#9db3a4; --line:#33503f;
+    --auri:#f2c14e; --star:#8fb4ff; --egg:#d9b878; --bar:#7fc25f; --barbg:#2c4538;
+    --btn:#7fc25f; --btnink:#14221a; --bird:#b08a5e; --bird2:#8a6840; --warn:#ff8a70; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#16241d; --panel:#1f3329; --ink:#e8f1e2; --muted:#9db3a4; --line:#33503f;
+  --auri:#f2c14e; --star:#8fb4ff; --egg:#d9b878; --bar:#7fc25f; --barbg:#2c4538;
+  --btn:#7fc25f; --btnink:#14221a; --bird:#b08a5e; --bird2:#8a6840; --warn:#ff8a70; color-scheme:dark;
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:Figtree,system-ui,sans-serif;font-size:16px;line-height:1.4}
+.app{max-width:440px;margin:0 auto;padding:16px 14px 100px}
+h1{font-family:"Bricolage Grotesque",Georgia,serif;font-weight:800;font-size:28px;margin:4px 0 2px;letter-spacing:-.01em}
+.sub{color:var(--muted);margin:0 0 14px;font-size:14px}
+.hp{text-align:center;margin:6px 0 16px}
+.hp b{display:block;font-family:"Bricolage Grotesque",Georgia,serif;font-weight:800;font-size:44px;line-height:1}
+.hp span{color:var(--muted);font-size:14px}
+.res{display:grid;grid-template-columns:repeat(auto-fit,minmax(86px,1fr));gap:8px;margin-bottom:14px}
+.res div{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:8px 6px;text-align:center}
+.res b{display:block;font-family:"Bricolage Grotesque",Georgia,serif;font-size:19px}
+.res span{font-size:12px;color:var(--muted)}
+.a b{color:var(--auri)} .s b{color:var(--star)} .e b{color:var(--egg)}
+.slot{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:12px;margin-bottom:12px;display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:center}
+.slot.empty{grid-template-columns:1fr;text-align:center;color:var(--muted);padding:22px 12px;border-style:dashed}
+.pet{background:none;border:0;padding:0;cursor:pointer;touch-action:manipulation}
+.pet svg{width:96px;height:96px;display:block;transition:transform .08s}
+.pet:active svg,.pet.pop svg{transform:scale(.92) translateY(2px)}
+.name{font-family:"Bricolage Grotesque",Georgia,serif;font-weight:600;font-size:17px;margin:0}
+.lv{color:var(--muted);font-size:13px;margin:0 0 6px}
+.bar{height:12px;border-radius:6px;background:var(--barbg);overflow:hidden;margin:6px 0 10px}
+.bar i{display:block;height:100%;background:var(--bar);border-radius:6px;transition:width .2s}
+.meta{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin:5px 0 8px}
+button.go{width:100%;background:var(--btn);color:var(--btnink);border:0;border-radius:10px;padding:10px;font:600 15px Figtree,system-ui,sans-serif;cursor:pointer}
+button.go:disabled{opacity:.45;cursor:not-allowed}
+button.alt{background:transparent;color:var(--ink);border:1px solid var(--line)}
+.note{font-size:13px;color:var(--muted);margin:6px 0 0}
+.buy{width:100%;margin:2px 0 14px}
+details{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:10px 12px;margin-top:16px}
+summary{cursor:pointer;font-weight:600}
+.tools{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.tools button{padding:9px 6px;font-size:13px}
+#toast{position:fixed;left:50%;bottom:calc(88px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 14px;border-radius:10px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s;max-width:88%;text-align:center}
+#toast.on{opacity:1}
+.slot.locked{position:relative;overflow:hidden}
+.slot.locked .pet svg{filter:grayscale(.9) opacity(.55)}
+.slot.locked .lk{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--bg) 45%,transparent)}
+.lk svg{width:72px;height:72px}
+dialog{border:1px solid var(--line);border-radius:16px;background:var(--panel);color:var(--ink);padding:18px;width:min(380px,92vw)}
+dialog::backdrop{background:rgba(0,0,0,.5)}
+dialog h2{font-family:"Bricolage Grotesque",Georgia,serif;margin:0 0 8px;font-size:22px}
+dialog input{width:100%;padding:9px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:14px Figtree,system-ui,sans-serif}
+.opts{display:grid;gap:8px;margin-top:12px}
+.nav{position:fixed;left:0;right:0;bottom:0;display:flex;justify-content:center;background:var(--panel);border-top:1px solid var(--line);padding:8px 8px calc(8px + env(safe-area-inset-bottom,0px))}
+.nav button{flex:1;max-width:200px;background:none;border:0;color:var(--muted);display:flex;flex-direction:column;align-items:center;gap:2px;font:600 12px Figtree,system-ui,sans-serif;cursor:pointer}
+.nav button.on{color:var(--ink)}
+.nav svg{width:26px;height:26px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:12px}
+.card .go{margin-top:8px}
+.tpn{font-family:"Bricolage Grotesque",Georgia,serif;font-weight:800;font-size:34px;line-height:1.1}
+.row{display:grid;grid-template-columns:64px 1fr 84px;gap:8px;align-items:center;padding:6px 0;border-top:1px solid var(--line);font-size:14px}
+.row .go{margin:0;padding:7px}
+.tk{grid-template-columns:1fr 104px}
+.rk{grid-template-columns:36px 1fr auto}
+.rk.me{font-weight:700;color:var(--auri)}
+.warn{color:var(--warn)}
+.fgrid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:12px}
+.fs{aspect-ratio:1;border:1px dashed var(--line);border-radius:12px;background:var(--panel);padding:4px;position:relative;cursor:pointer;color:var(--ink);display:block}
+.fs.on{border-style:solid;cursor:default}
+.fs svg{width:100%;height:100%;display:block}
+.ghost{opacity:.18;display:block;height:100%}
+.fs b{position:absolute;right:5px;bottom:1px;font-size:20px}
+.back{width:auto;padding:8px 14px;margin-bottom:10px}
+.row.dpr{grid-template-columns:56px 1fr}
+.dpr .ic svg{width:48px;height:48px}
+.mkb svg{width:72px;height:72px;display:inline-block;vertical-align:middle}
+.res{display:flex;justify-content:flex-end;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.res div{display:flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:5px 9px;text-align:left}
+.res b{display:inline;font-size:15px;color:var(--ink)}
+.res svg{width:18px;height:18px;display:block}
+.res span{display:none}
+.hp b{display:inline-block;vertical-align:middle}
+.hp svg{width:30px;height:30px;vertical-align:middle;margin-right:8px}
+.hp span{display:block}
+#slots{display:flex;gap:12px;overflow-x:auto;scroll-snap-type:x mandatory;padding:4px 7%;margin:0 -14px 6px;scrollbar-width:none}
+#slots::-webkit-scrollbar{display:none}
+.cc{flex:0 0 86%;scroll-snap-align:center;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:12px;text-align:center;position:relative}
+.cc.empty{display:flex;flex-direction:column;justify-content:center;min-height:300px;color:var(--muted);border-style:dashed}
+.ct{display:flex;justify-content:space-between;color:var(--muted);font-weight:700;font-size:13px;letter-spacing:.04em}
+.cart{display:block;width:100%}
+.cart svg{width:100%;max-width:230px;height:auto;aspect-ratio:1;margin:0 auto;display:block}
+.bub{background:#fff;color:#111;border-radius:12px;padding:6px 14px;font-weight:800;font-size:15px;display:inline-block;transform:rotate(-2deg);margin:-16px 0 10px;position:relative;box-shadow:0 2px 0 rgba(0,0,0,.25)}
+.cc .bar{margin:4px 0 10px}
+.cc.lockc .pet svg{filter:grayscale(.9) opacity(.55)}
+.cc.lockc .lk{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:color-mix(in srgb,var(--bg) 45%,transparent);border-radius:20px}
+.dots{display:flex;justify-content:center;gap:8px;margin:2px 0 12px;flex-wrap:wrap}
+.dots i{width:10px;height:10px;border-radius:50%;background:var(--barbg);cursor:pointer}
+.dots i.on{background:var(--ink)}
+.dots i.lk{border-radius:3px;opacity:.5}
+.lg{display:grid;gap:4px;margin-top:8px;font-size:13px}
+.lg div{display:flex;align-items:center;gap:8px}
+.lg i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.lg b{margin-left:auto}
+.xl{font-size:11px;background:var(--auri);color:var(--bg);border-radius:6px;padding:1px 6px;vertical-align:middle}
+.cf{display:flex;gap:12px;width:100%;text-align:left;cursor:pointer;color:inherit;font:inherit;align-items:center}
+.cf>div:last-child,.pcc>div:last-child{flex:1}
+.ic svg{width:64px;height:64px;display:block}
+.dts{display:flex;gap:4px;flex-wrap:wrap;margin:6px 0}
+.dt{width:12px;height:12px;border-radius:50%;background:var(--barbg)}
+.dt.on{background:var(--bar)}
+.rw{display:flex;gap:10px;flex-wrap:wrap;font-weight:600;font-size:14px}
+.ra{color:var(--auri)} .rs{color:var(--star)}
+.tc{position:relative;text-align:center}
+.tc .rw{justify-content:center;font-size:22px;margin-top:6px}
+.inf{position:absolute;right:10px;top:10px;width:28px;height:28px;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--ink);cursor:pointer;font-weight:700}
+.pcc{display:flex;gap:12px;align-items:center}
+.fgrid{grid-template-columns:repeat(3,1fr)}
+.fx{border:1px dashed var(--line);border-radius:14px;background:var(--panel);padding:8px 6px;text-align:center;cursor:pointer;color:var(--ink);font:inherit;display:block}
+.fx.on{border-style:solid;cursor:default}
+.fx svg{width:100%;height:84px;display:block}
+.fx .lv{font-size:11px;margin:0 0 4px}
+.fx .rw{justify-content:center;font-size:12px;gap:2px;flex-direction:column;align-items:center}
+.row.rk{grid-template-columns:64px 1fr auto}
+@media (prefers-reduced-motion:reduce){.pet svg,.bar i{transition:none}}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="res" id="res"></div>
+  <div id="pf">
+  <div class="hp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s-7-4.6-9.3-9A5.3 5.3 0 0 1 12 6a5.3 5.3 0 0 1 9.3 6c-2.3 4.4-9.3 9-9.3 9z" fill="#e0b84d"/></svg><b id="hp">0</b><span>Toplam HP</span></div>
+  <div id="slots"></div>
+  <div class="dots" id="dots"></div>
+  <button class="go alt buy" id="buySlot"></button>
+  <div id="barn"></div>
+  <div id="dep"></div>
+  <div id="mk"></div>
+  <details hidden>
+    <summary>Test araçları</summary>
+    <div class="tools">
+      <button class="go alt" data-t="skip">8 saat ileri sar</button>
+      <button class="go alt" data-t="auri">+1000 Auri</button>
+      <button class="go alt" data-t="star">+50 yıldız</button>
+      <button class="go alt" data-t="add">Deve kuşu ekle</button>
+      <button class="go alt" data-t="egg">+50 yumurta</button>
+      <button class="go alt" data-t="big">+50.000 Auri</button>
+      <button class="go alt" data-t="full">Full Deve kuşu ekle</button>
+      <button class="go alt" data-t="fullL">Full Lama ekle</button>
+      <button class="go alt" data-t="fullX">Full XL Lama ekle</button>
+      <button class="go alt" data-t="fullM">Full Midilli ekle</button>
+      <button class="go alt" data-t="fullA">Full At ekle</button>
+      <button class="go alt" data-t="luck">Epik şansı %100 / geri al</button>
+      <button class="go alt" data-t="rec">Tarif malzemelerini ver</button>
+      <button class="go alt" data-t="evt">Etkinlik Mitik’i ver</button>
+      <button class="go alt" data-t="fullT">Full Tulpar ekle</button>
+      <button class="go alt" data-t="res">+50 yün ve kımız</button>
+      <button class="go alt" data-t="reset">Sıfırla</button>
+    </div>
+    <p class="note">Rakamların hepsi kodun başındaki CFG nesnesinde durur. Çiftleşme simüle edilir: eş ve linke tıklayan oyuncu rastgele üretilir, süreyi “8 saat ileri sar” ile geçirebilirsiniz.</p>
+  </details>
+  <div id="set"></div>
+  </div>
+  <div id="pt" hidden></div>
+  <div id="pc" hidden></div>
+  <div id="pm" hidden></div>
+</div>
+<nav class="nav">
+  <button data-p="m" aria-label="Market"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M3 9l1.5-5h15L21 9v1a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0z"/><path d="M5 13v7h14v-7"/></svg>Market</button>
+  <button data-p="f" class="on" aria-label="Çiftlik"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M3 11l9-7 9 7v9H3z"/><path d="M9 20v-6h6v6"/></svg>Çiftlik</button>
+  <button data-p="t" aria-label="Turnuva"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M5 20V12M12 20V5M19 20v-9"/></svg>Turnuva</button>
+  <button data-p="c" aria-label="Çiftlikler"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M4 20V8l2-2 2 2v12M10 20V8l2-2 2 2v12M16 20V8l2-2 2 2v12M3 14h18"/></svg>Çiftlikler</button>
+</nav>
+<dialog id="dlg"></dialog>
+<div id="toast"></div>
+<script>
+const CFG={
+  startAuri:500, startStar:100, baseSlots:3,
+  windowMs:8*3600*1000,            // 8 saatlik sabit pencere
+  hpPerClick:0.25, clicksPerEgg:4, // Deve kusu: 4 tiklamada 1 yumurta
+  caps:[20,50,90,140,200],         // level basina kumulatif HP tavani
+  cost:[{min:1,max:10,ramp:80},{min:2,max:100,ramp:120},{min:3,max:150,ramp:150},{min:4,max:200,ramp:180},{min:5,max:250,ramp:200}], // level basina besleme maliyeti, ramp = kac tiklamada min'den max'a cikar. Level 3-5 yer tutucu
+  slotCosts:[10,20,20,40,40,80,80,120,160,200,240], slotStep:40,
+  mateHours:[12,16,20,24], mateFee:[500,500,500,500], // saat ve Auri, yer tutucu
+  newAnimal:[0.20,0.01,0.001,0.000001,0.000001], searchSec:15, // yeni hayvan ihtimali: Common, Uncommon, Rare, Epic, Mitik
+  basketEvery:500, basketHours:2, basketCap:5, capCosts:[20,40,60,80,120,160,200,240,280,320], // sepet gorevi araligi (TP), sepet suresi, baslangic kapasite, kapasite fiyati
+  tpRewards:[{t:100,egg:10},{t:500,auri:1000},{t:1000,egg:30},{t:2000,auri:3000}], // taban oduller, yer tutucu
+  taskTiers:[[2,10],[5,25],[10,50],[20,100]], // [yumurta, TP]
+  farm1:{need:10,cost:25000,star:5,done:100000} // ilk ciftlik: slot sayisi, hayvan basi Auri, hayvan basi yildiz, tamamlama odulu (yer tutucu)
+};
+CFG.types={o:{name:"Deve kuşu",hp:CFG.hpPerClick,caps:CFG.caps,cost:CFG.cost,res:"egg",tier:0},l:{name:"Lama",hp:0.5,caps:[40,100,180,280,400],cost:[{min:2,max:20,ramp:80},{min:4,max:200,ramp:120},{min:6,max:300,ramp:150},{min:8,max:400,ramp:180},{min:10,max:500,ramp:200}],res:"yun",tier:1},m:{name:"Midilli",hp:1,caps:[80,200,360,560,800],cost:[{min:4,max:40,ramp:80},{min:8,max:400,ramp:120},{min:12,max:600,ramp:150},{min:16,max:800,ramp:180},{min:20,max:1000,ramp:200}],res:"kimiz",tier:2},a:{name:"At",hp:2,caps:[160,400,720,1120,1600],cost:[{min:8,max:80,ramp:80},{min:16,max:800,ramp:120},{min:24,max:1200,ramp:150},{min:32,max:1600,ramp:180},{min:40,max:2000,ramp:200}],res:"nal",tier:3}}; // Lama, Midilli ve At degerleri yer tutucu
+CFG.barn={need:4,cost:100000};
+CFG.barns=[{from:"o",to:"l",need:4,cost:100000,label:"Deve kuşu → Lama"},{from:"l",to:"m",need:4,cost:250000,label:"Lama → Midilli"}]; // Midilli bedeli yer tutucu
+CFG.epic={need:5,cost:20000,chance:0.05}; // Rare -> Epic denemesi, sans yer tutucu
+CFG.depot={payback:60,cap:5,star:{o:5,l:10,m:20,a:40},rate:{o:20,l:60,m:150,a:400},maxH:24,capCosts:[20,40,60,80,120,160,200,240,280,320]}; // depo: kapasite, yildiz bedeli, saatlik Auri, maks birikim, genisletme (yer tutucu)
+CFG.mk=[{k:"t",n:"Tulpar",res:"Rüzgâr Nalı"},{k:"p",n:"Pegasus",res:"Yıldız Tozu"},{k:"s",n:"Sleipnir",res:"Rün Taşı"},{k:"x",n:"Kırat",res:"Kıvılcım"}]; // Mitik ailesi ve ozel kaynaklari (yer tutucu)
+CFG.recipe={egg:500,yun:300,kimiz:200,nal:100,auri:1000000}; // Mitik tarifi (yer tutucu)
+CFG.mk.forEach(m=>{CFG.types[m.k]={name:m.n,hp:10,caps:[400,1000,1800,2800,4000],cost:[{min:40,max:400,ramp:80},{min:80,max:2000,ramp:120},{min:120,max:3000,ramp:150},{min:160,max:4000,ramp:180},{min:200,max:5000,ramp:200}],res:"r_"+m.k,tier:4,myth:1};CFG.depot.star[m.k]=150;CFG.depot.rate[m.k]=1500});
+// Common (Deve kusu): tik basina 0.10 HP, level basina 100-500 tik. F = bir pencerede n tik icin kumulatif maliyet (bilinen noktalar, arasi dogrusal), m = level carpani. 400 tiktan sonra tavan. Tik artis formulu gelince degisecek
+Object.assign(CFG.types.o,{hp:0.1,caps:[10,30,60,100,150],m:[1,2,4,5,6],g:[20,20,16,12,11,10,4,4,2,1].flatMap((n,i)=>Array(n).fill(i+1)),F:[[0,0],[50,90],[100,359],[150,2134],[200,6409],[300,22459],[400,48509]]});
+// Besleme maliyeti tablolari (oyuncunun verdigi toplamlar). m = seviye carpani (50 tiklik sefer = m x 90 Auri). k = 100 tiktan sonra tek seferde n tik icin toplam maliyet noktalari. 100 tikta m x 359.
+const GP=[20,20,16,12,11,10,4,4,2,1].flatMap((n,i)=>Array(n).fill(i+1));
+// Ortak (carpansiz) kumulatif maliyet noktalari, Common/Uncommon/Rare tablolarindan. Epic'te veri olmayan yerler icin tahmin: ortak egri x carpan x est
+const BF=[[100,359],[150,2134],[200,6409],[300,22459],[400,48509],[450,65284],[600,130609],[750,218434],[800,252709],[1000,414809]];
+function bslope(t){let i=1;while(i<BF.length-1&&BF[i][0]<t)i++;const a=BF[i-1],b=BF[i];return (b[1]-a[1])/(b[0]-a[0])}
+Object.assign(CFG.types.o,{pr:{m:[1,2,4,5,6],k:[[],[[200,12818]],[[150,8536],[300,89836]],[[200,32045],[400,242545]],[[500,291054]]]}});
+Object.assign(CFG.types.l,{hp:0.1,caps:[15,45,90,150,225],m:[5,10,15,20,30],pr:{m:[5,10,15,20,30],k:[[[150,10670]],[[150,21340],[300,224590]],[[150,32010],[450,979260]],[[200,128180],[600,2612180]],[[250,263680],[750,6553020]]]}});
+Object.assign(CFG.types.m,{hp:0.1,caps:[20,60,120,200,300],m:[15,20,30,50,75],pr:{m:[15,20,30,50,75],k:[[[200,96135]],[[200,128180],[400,970180]],[[200,192270],[600,3918270]],[[200,320450],[800,12635450]],[[200,480675],[1000,31110675]]]}});
+Object.assign(CFG.types.a,{hp:0.1,caps:[30,90,180,300,450],m:[30,40,60,90,150],pr:{est:0.634,m:[30,40,60,90,150],k:[[[150,58890]],[[200,162520]],[[200,243780]],[[200,365670]],[[200,609450]]]}});
+const KEY="af_proto_v1";
+let S=load();S.queue=S.queue||[];
+function fresh(){return {auri:CFG.startAuri,star:CFG.startStar,egg:0,slots:CFG.baseSlots,off:0,pets:[newPet(),null,null],queue:[]}}
+function newPet(t){return {type:t||"o",level:1,hp:0,inh:0,clicks:0,start:null}}
+function load(){try{const r=localStorage.getItem(KEY);if(r)return JSON.parse(r)}catch(e){}return fresh()}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+const now=()=>Date.now()+S.off;
+const T=p=>CFG.types[p.type||"o"];const isO=p=>p&&(p.type||"o")==="o";const cap=p=>T(p).caps[p.level-1];
+const prev=p=>p.level>1?T(p).caps[p.level-2]:0;
+const state=p=>p.mate?"mating":p.hp>=cap(p)?(p.level<5?"ready":"full"):"feed";
+function Fint(F,n){for(let i=1;i<F.length;i++){if(n<=F[i][0]){const a=F[i-1],b=F[i];return a[1]+(b[1]-a[1])*(n-a[0])/(b[0]-a[0])}}const a=F[F.length-2],b=F[F.length-1];return b[1]+(b[1]-a[1])/(b[0]-a[0])*(n-b[0])}
+function cost(p){const Y=T(p);if(Y.pr){const L=p.level-1,m=Y.pr.m[L],t=p.clicks+1;if(t<=100)return m*GP[t-1];const K=[[100,m*359]].concat(Y.pr.k[L]);if(K.length<2)return m*10;if(Y.pr.est&&t>K[K.length-1][0])return Math.max(m*10,Math.round(bslope(t)*m*Y.pr.est));let i=1;while(i<K.length-1&&K[i][0]<t)i++;const a=K[i-1],b=K[i];return Math.max(m*10,Math.round((b[1]-a[1])/(b[0]-a[0])))}const k=Y.cost[p.level-1];return Math.min(k.max,Math.round(k.min*Math.pow(k.max/k.min,p.clicks/k.ramp)))}
+function refresh(p){if(p.start&&now()-p.start>=CFG.windowMs){p.start=null;p.clicks=0;return true}return false}
+function slotPrice(){const n=S.slots-CFG.baseSlots,L=CFG.slotCosts;return n<L.length?L[n]:L[L.length-1]+(n-L.length+1)*CFG.slotStep}
+function fmt(ms){const s=Math.max(0,Math.ceil(ms/1000)),h=Math.floor(s/3600),m=Math.floor(s%3600/60),r=s%60;return `${h}sa ${String(m).padStart(2,"0")}dk ${String(r).padStart(2,"0")}sn`}
+function num(x){return (Math.round(x*100)/100).toLocaleString("tr-TR")}
+function toast(t){const e=document.getElementById("toast");e.textContent=t;e.classList.add("on");clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove("on"),1800)}
+
+function bird(){return `<svg viewBox="0 0 120 120" aria-hidden="true">
+<ellipse cx="60" cy="112" rx="30" ry="5" fill="#000" opacity=".12"/>
+<path d="M52 84v24M68 84v24M46 108h12M62 108h12" stroke="#c98d3b" stroke-width="4" stroke-linecap="round" fill="none"/>
+<path d="M34 60q-18-8-20 8q10 6 22 0z" fill="var(--bird2)"/>
+<ellipse cx="60" cy="68" rx="30" ry="22" fill="var(--bird)"/>
+<path d="M48 64q14-12 28 2q-10 14-28 2z" fill="var(--bird2)"/>
+<path d="M82 54Q94 40 87 22" stroke="#e9c9a1" stroke-width="7" fill="none" stroke-linecap="round"/>
+<circle cx="87" cy="18" r="8" fill="#e9c9a1"/><path d="M94 17l11 3-11 4z" fill="#e8a33a"/><circle cx="89" cy="15" r="1.8" fill="#222"/></svg>`}
+
+function lama(){return `<svg viewBox="0 0 120 120" aria-hidden="true"><ellipse cx="60" cy="112" rx="30" ry="5" fill="#000" opacity=".12"/><path d="M42 84v24M56 84v24M72 84v24M86 84v24" stroke="#c9b99a" stroke-width="5" stroke-linecap="round"/><ellipse cx="62" cy="68" rx="32" ry="22" fill="#e9dfc8"/><circle cx="46" cy="60" r="10" fill="#f3ecda"/><circle cx="64" cy="56" r="11" fill="#f3ecda"/><circle cx="80" cy="64" r="9" fill="#f3ecda"/><path d="M88 58Q98 44 94 24" stroke="#e9dfc8" stroke-width="12" fill="none" stroke-linecap="round"/><ellipse cx="97" cy="20" rx="11" ry="8" fill="#e9dfc8"/><path d="M92 14l-2-12M100 14l3-12" stroke="#c9b99a" stroke-width="4" stroke-linecap="round"/><circle cx="100" cy="18" r="1.8" fill="#222"/><ellipse cx="106" cy="23" rx="3" ry="2" fill="#b79f7a"/></svg>`}
+function midilli(){return `<svg viewBox="0 0 120 120" aria-hidden="true"><ellipse cx="60" cy="112" rx="30" ry="5" fill="#000" opacity=".12"/><path d="M40 84v24M54 84v24M74 84v24M88 84v24" stroke="#7a5230" stroke-width="5" stroke-linecap="round"/><path d="M34 62Q18 70 24 92" stroke="#3b2a1a" stroke-width="6" fill="none" stroke-linecap="round"/><ellipse cx="64" cy="68" rx="32" ry="20" fill="#a9733f"/><path d="M88 60Q100 46 98 28" stroke="#a9733f" stroke-width="14" fill="none" stroke-linecap="round"/><ellipse cx="103" cy="24" rx="12" ry="8" fill="#a9733f"/><path d="M86 56Q94 44 94 24" stroke="#3b2a1a" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M96 16l1-9 4 8z" fill="#a9733f"/><circle cx="104" cy="21" r="1.8" fill="#222"/></svg>`}
+function atSvg(){return midilli().replace(/#a9733f/g,"#3b2f2f").replace(/#7a5230/g,"#241c1c").replace(/#3b2a1a/g,"#c9a25a")}
+function mt(p){return ["t","p","s","x"].includes(p.type)}
+function mythicArt(k){const c={t:["#c9ddf2","#6c8fc0","#fff"],p:["#f4f1e8","#c9c2ad","#f2c14e"],s:["#9aa3ad","#5b636c","#cfd6de"],x:["#b4462f","#7a2b1c","#e8b04a"]}[k];const s=midilli().replace(/#a9733f/g,c[0]).replace(/#7a5230/g,c[1]).replace(/#3b2a1a/g,c[1]);const wing=`<path d="M52 62Q28 28 70 40Q60 54 66 62Z" fill="${c[2]}" stroke="${c[1]}" stroke-width="1.5"/>`,legs=k==="s"?`<path d="M47 84v24M81 84v24M60 84v24M67 84v24" stroke="${c[1]}" stroke-width="5" stroke-linecap="round"/>`:"";return s.replace("</svg>",legs+wing+"</svg>")}
+const art=p=>p.type==="l"?lama():p.type==="m"?midilli():p.type==="a"?atSvg():mt(p)?mythicArt(p.type):bird();
+const LOCK='<svg viewBox="0 0 48 48" aria-hidden="true"><path d="M16 21v-6a8 8 0 0 1 16 0v6" stroke="var(--ink)" stroke-width="5" fill="none" stroke-linecap="round"/><rect x="10" y="21" width="28" height="22" rx="4" fill="var(--ink)"/><circle cx="24" cy="32" r="3.5" fill="var(--bg)"/></svg>';
+function render(){
+  ensureT();applyDev();
+  document.getElementById("res").innerHTML=
+   `<div class="a"><b>${num(S.auri)}</b><span>Auri</span></div><div class="s"><b>${num(S.star)}</b><span>Yıldız</span></div><div class="e"><b>${num(S.egg)}</b><span>Büyük yumurta</span></div>${S.yun?`<div class="e"><b>${num(S.yun)}</b><span>Yün</span></div>`:""}${S.kimiz?`<div class="e"><b>${num(S.kimiz)}</b><span>Kımız</span></div>`:""}${S.nal?`<div class="e"><b>${num(S.nal)}</b><span>Nal</span></div>`:""}${CFG.mk.map(m=>S["r_"+m.k]?`<div class="e"><b>${num(S["r_"+m.k])}</b><span>${m.res}</span></div>`:"").join("")}`;
+  document.getElementById("hp").textContent=num(S.pets.concat(S.dep||[]).reduce((a,p)=>a+(p?p.hp+(p.inh||0):0),0));
+  let h="";
+  S.pets.forEach((p,i)=>{
+    if(!p){h+=`<div class="slot empty">Boş slot ${i+1}<br><small>Test araçlarından hayvan ekleyebilirsiniz.</small></div>`;return}
+    refresh(p);
+    const st=state(p),seg=cap(p)-prev(p),pct=Math.min(100,(p.hp-prev(p))/seg*100);
+    const label=st==="feed"?"Besle · "+cost(p)+" Auri":st==="ready"?(p.paid?"Eş bul":"Çiftleşme ücretini öde · "+CFG.mateFee[p.level-1]+" Auri"):st==="mating"?"Çiftleşiyor":"Depoya al · ★ "+CFG.depot.star[p.type||"o"];
+    h+=`<div class="slot" data-i="${i}">
+      <button class="pet" data-a="feed" aria-label="Besle">${art(p)}</button>
+      <div><p class="name">${T(p).name}${p.inh?` <span class="xl">XL</span>`:""}${T(p).myth?` <span class="xl" style="background:var(--star)">MİTİK</span>`:""}</p><p class="lv">Level ${p.level} / 5${st==="ready"?" · çiftleşmeye hazır":st==="full"?" · full":st==="mating"?" · çiftleşiyor":""}</p>
+      <div class="bar"><i style="width:${pct}%"></i></div>
+      <button class="go" data-a="${st==="feed"?"feed":st==="ready"?"mate":st==="full"?"dep":"none"}" ${st==="mating"?"disabled":""}>${label}</button>
+      <p class="note" data-w="${i}">${noteText(p)}</p></div></div>`;
+  });
+  S.queue.forEach((p,j)=>{h+=`<div class="slot locked"><div class="pet">${art(p)}</div><div><p class="name">${T(p).name}</p><p class="lv">Kilitli · sırada ${j+1}. hayvan</p><p class="note">${j===0?"Bir sonraki slotu açınca bu hayvana ulaşırsınız.":"Önündeki hayvanlar açıldıktan sonra erişilir."}</p></div><div class="lk" aria-label="Kilitli">${LOCK}</div></div>`});
+  document.getElementById("slots").innerHTML=h;
+  renderCar();renderBarn();renderDep();renderMk();const b=document.getElementById("buySlot");b.textContent=`Yeni slot aç · ${slotPrice()} yıldız`;
+}
+function noteText(p){if(p.mate)return `Eş: ${p.mate.pn} (Level ${p.mate.pl}) · biter: ${fmt(p.mate.end-now())}`;return p.start?"Pencere sıfırlanır: "+fmt(p.start+CFG.windowMs-now()):"Pencere henüz başlamadı"}
+function tick(){let ch=tickT();updDep();S.pets.forEach((p,i)=>{if(!p)return;if(p.mate&&now()>=p.mate.end){finishMate(i);ch=true;return}if(refresh(p))ch=true;const e=document.querySelector(`[data-w="${i}"]`);if(e)e.textContent=noteText(p)});if(ch){save();render()}}
+function finishMate(i){const p=S.pets[i],m=p.mate,ch=CFG.newAnimal[T(p).tier],mine=Math.random()<ch,theirs=Math.random()<ch,pool=m.fee+m.pf;let msg;p.level++;p.start=null;p.clicks=0;p.mate=null;
+  if(mine){const k=S.pets.indexOf(null);if(k>=0)S.pets[k]=newPet(p.type);else S.queue.push(newPet(p.type));msg="yeni Deve kuşu kazandınız"}
+  else{const g=theirs?pool:pool/2;S.auri+=g;msg="+"+num(g)+" Auri"+(theirs?" (eşiniz yeni hayvan kazandı, havuzun tamamı sizde)":"")}
+  toast("Çiftleşme bitti, Level "+p.level+": "+msg)}
+
+function feed(i){
+  const p=S.pets[i];refresh(p);
+  if(state(p)!=="feed")return;
+  const c=cost(p);
+  if(S.auri<c){toast("Yeterli Auri yok. Pencerenin sıfırlanmasını bekleyin.");return}
+  S.auri-=c;p.clicks++;if(!p.start)p.start=now();
+  p.hp=Math.min(cap(p),p.hp+T(p).hp);p.tot=(p.tot||0)+1;if(p.tot%CFG.clicksPerEgg===0)S[T(p).res]=(S[T(p).res]||0)+1;
+  save();render();
+  const el=document.querySelector(`[data-i="${i}"] .pet`);if(el){el.classList.add("pop");setTimeout(()=>el.classList.remove("pop"),90)}
+}
+document.getElementById("slots").addEventListener("click",e=>{
+  const b=e.target.closest("[data-a]");if(!b)return;
+  const i=+b.closest("[data-i]").dataset.i,a=b.dataset.a;
+  if(a==="feed")feed(i);if(a==="dep")toDep(i);
+  if(a==="mate"&&state(S.pets[i])==="ready"){const p=S.pets[i],f=CFG.mateFee[p.level-1];if(p.paid)openMate(i);else if(S.auri<f)toast("Yeterli Auri yok");else{S.auri-=f;p.paid=true;save();render();toast("Ücret ödendi, eş bulabilirsiniz")}}
+});
+document.getElementById("buySlot").addEventListener("click",()=>{
+  const c=slotPrice();
+  if(S.star<c){toast("Yeterli yıldız yok.");return}
+  S.star-=c;S.slots++;S.pets.push(S.queue.shift()||null);save();render();toast("Yeni slot açıldı");
+});
+document.querySelector(".tools").addEventListener("click",e=>{
+  const t=e.target.dataset.t;if(!t)return;
+  if(t==="skip")S.off+=CFG.windowMs;
+  if(t==="auri")S.auri+=1000;
+  if(t==="star")S.star+=50;if(t==="egg")S.egg+=50;if(t==="big")S.auri+=50000;if(t==="full"){const k=S.pets.indexOf(null),p=newPet();p.level=5;p.hp=CFG.types.o.caps[4];if(k<0)S.queue.push(p);else S.pets[k]=p}
+  if(t==="fullL"){const k=S.pets.indexOf(null),p=newPet("l");p.level=5;p.hp=CFG.types.l.caps[4];if(k<0)S.queue.push(p);else S.pets[k]=p}
+  if(t==="res"){S.yun=(S.yun||0)+50;S.kimiz=(S.kimiz||0)+50;S.nal=(S.nal||0)+50}
+  if(t==="evt"){const m=CFG.mk[Math.floor(Math.random()*4)];S.queue.push(newPet(m.k));fillSlots();toast("Etkinlik Mitik’i: "+m.n)}
+  if(t==="rec"){const R=CFG.recipe;S.egg+=R.egg;S.yun=(S.yun||0)+R.yun;S.kimiz=(S.kimiz||0)+R.kimiz;S.nal=(S.nal||0)+R.nal;S.auri+=R.auri}
+  if(t==="fullT"){const k=S.pets.indexOf(null),p=newPet("t");p.level=5;p.hp=CFG.types.t.caps[4];if(k<0)S.queue.push(p);else S.pets[k]=p}
+  if(t==="luck"){CFG.epic.chance=CFG.epic.chance>=1?0.05:1;toast("Epik şansı %"+CFG.epic.chance*100)}
+  if(t==="fullX"||t==="fullM"||t==="fullA"){const k=S.pets.indexOf(null),p=newPet(t==="fullM"?"m":t==="fullA"?"a":"l");p.level=5;p.hp=CFG.types[p.type].caps[4];if(t==="fullX")p.inh=500;if(k<0)S.queue.push(p);else S.pets[k]=p}
+  if(t==="add"){const k=S.pets.indexOf(null);if(k<0){S.queue.push(newPet());toast("Slot yok, hayvan kilitli sıraya girdi")}else S.pets[k]=newPet()}
+  if(t==="reset"){S=fresh()}
+  save();render();
+});
+const dlg=document.getElementById("dlg");let srch=null;
+dlg.addEventListener("close",()=>clearInterval(srch));
+function rid(){return "Oyuncu #"+(1000+Math.floor(Math.random()*9000))}
+function openMate(i){const p=S.pets[i];dlg.dataset.i=i;dlg.innerHTML=`<h2>Çiftleşme</h2><p>Ücret ödendi. Eş bulunduğunda çiftleşme otomatik başlar. Eşin de kendi ücretini önceden ödemiştir, havuz eşit bölünür.</p><div class="opts"><button class="go" data-m="quick">Hızlı eş bul</button><button class="go alt" data-m="link">Link ile davet et</button><button class="go alt" data-m="x">Vazgeç</button></div>`;dlg.showModal()}
+function startMate(i,pl,pn){const p=S.pets[i],h=CFG.mateHours[Math.max(p.level,pl)-1];p.mate={end:now()+h*3600000,pl,pf:CFG.mateFee[pl-1],pn,fee:CFG.mateFee[p.level-1]};p.paid=false;save();dlg.close();render();toast("Eş bulundu: "+pn+", Level "+pl+". Süre "+h+" saat.")}
+dlg.addEventListener("click",e=>{const m=e.target.dataset.m;if(!m)return;const i=+dlg.dataset.i,p=S.pets[i];
+  if(m==="x"){dlg.close();return}
+  if(m==="quick"){let n=CFG.searchSec;dlg.innerHTML=`<h2>Eş aranıyor</h2><p id="sn">${n} sn</p><button class="go alt" data-m="x">İptal</button>`;srch=setInterval(()=>{n--;const el=document.getElementById("sn");if(el)el.textContent=n+" sn";if(n<=0){clearInterval(srch);const real=Math.random()<0.4;startMate(i,real?1+Math.floor(Math.random()*4):p.level,real?rid():"Çiftlik Eşi")}},1000)}
+  if(m==="link"){const l="https://t.me/AnimalFarmBot/app?startapp=m_"+Math.random().toString(36).slice(2,8);dlg.dataset.l=l;dlg.innerHTML=`<h2>Davet linki</h2><p class="note">Bu link yalnızca bu hayvana özeldir. İlk tıklayan eşleşir.</p><input readonly value="${l}"><div class="opts"><button class="go" data-m="copy">Linki kopyala</button><button class="go alt" data-m="clk">Biri linke tıkladı (test)</button><button class="go alt" data-m="x">İptal</button></div>`}
+  if(m==="copy"){try{navigator.clipboard.writeText(dlg.dataset.l)}catch(err){}toast("Kopyalandı")}
+  if(m==="clk")startMate(i,1+Math.floor(Math.random()*4),rid());
+});
+let page="f";
+const dk=()=>Math.floor((now()-21*3600000)/86400000), dayEnd=()=>(dk()+1)*86400000+21*3600000;
+function genRank(){return Array.from({length:30},()=>({n:rid(),tp:Math.round(Math.random()*Math.random()*2400)}))}
+const RN={egg:"yumurta",yun:"yün",kimiz:"kımız",nal:"nal"};
+function newTask(){const t=CFG.taskTiers[Math.floor(Math.random()*CFG.taskTiers.length)],R=["egg"];if(S.yun)R.push("yun");if(S.kimiz)R.push("kimiz");if(S.nal)R.push("nal");return {need:t[0],tp:t[1],res:R[Math.floor(Math.random()*R.length)]}}
+function ensureT(){S.dep=S.dep||[];S.depCap=S.depCap||CFG.depot.cap;if(!S.bk)S.bk={stock:0,cap:CFG.basketCap,end:null,starOpens:0};if(S.tp===undefined){S.tp=0;S.claimed=[];S.gate=CFG.basketEvery}if(S.day!==dk()){S.day=dk();S.tp=0;S.claimed=[];S.gate=CFG.basketEvery;S.bk.starOpens=0;S.rank=genRank()}if(!S.rank)S.rank=genRank();if(!S.tasks||!S.tasks.length||S.tasks.length>3)S.tasks=[0,1,2].map(newTask)}
+function capCost(){const n=S.bk.cap-CFG.basketCap,L=CFG.capCosts;return n<L.length?L[n]:L[L.length-1]+(n-L.length+1)*40}
+function starCost(){return S.bk.starOpens<5?10:25}
+function tickT(){const d=S.day;ensureT();let c=d!==S.day;if(S.bk.end&&now()>=S.bk.end){S.bk.end=null;if(S.bk.stock<S.bk.cap)S.bk.stock++;toast("Sepet açıldı");c=true}if(page==="t"){const e=document.getElementById("bkTimer");if(e&&S.bk.end)e.textContent=fmt(S.bk.end-now());if(c)renderT()}if(c)save();return c}
+function renderT(){ensureT();const K=S.bk,gated=S.tp>=S.gate;
+  let h=`<div class="card"><p class="name">Günlük turnuva</p><p class="note">Sıfırlanmaya: ${fmt(dayEnd()-now())}</p><div class="tpn">${S.tp} <small>TP</small></div>`;
+  CFG.tpRewards.forEach(r=>{const ok=S.tp>=r.t,dn=S.claimed.includes(r.t);h+=`<div class="row"><span>${r.t} TP</span><span>${r.egg?r.egg+" yumurta":num(r.auri)+" Auri"}</span><button class="go ${dn?"alt":""}" data-c="${r.t}" ${ok&&!dn?"":"disabled"}>${dn?"Alındı":"Al"}</button></div>`});
+  h+=`</div><div class="card"><p class="name">Çiftlik sepeti</p><p class="note">Saklanan sepet: <b>${K.stock}</b> / ${K.cap}. Her ${CFG.basketEvery} TP'de bir sepet gerekir.</p>`;
+  h+=K.end?`<p class="note">Sepet açılıyor: <b id="bkTimer">${fmt(K.end-now())}</b></p>`:`<button class="go" data-b="start" ${K.stock<K.cap?"":"disabled"}>Sepeti aç (${CFG.basketHours} saat)</button>`;
+  h+=`<button class="go alt" data-b="star">Yıldızla aç · ${starCost()} yıldız</button><button class="go alt" data-b="cap">Kapasiteyi artır · ${capCost()} yıldız</button></div>`;
+  h+=`<div class="card"><p class="name">Görevler</p>`;
+  if(gated)h+=`<div class="row tk"><span><b>Sepet görevi</b><br>1 sepet teslim et (${S.gate} TP eşiği)</span><button class="go" data-b="use" ${K.stock?"":"disabled"}>Teslim et</button></div>${K.stock?"":`<p class="note">Sepetiniz yok, yukarıdan sepeti açın.</p>`}`;
+  if(!gated)S.tasks.forEach((t,k)=>{h+=`<div class="row tk"><span>${t.need} ${RN[t.res||"egg"]} → ${t.tp} TP</span><button class="go" data-k="${k}" ${S[t.res||"egg"]>=t.need?"":"disabled"}>Teslim et</button></div>`});
+  h+=`</div><div class="card"><p class="name">Sıralama</p>`;
+  const all=S.rank.concat([{n:"Siz",tp:S.tp,me:1}]).sort((a,b)=>b.tp-a.tp),mi=all.findIndex(x=>x.me);
+  all.forEach((x,k)=>{if(k<8||x.me)h+=`<div class="row rk ${x.me?"me":""}"><span>${k+1}.</span><span>${x.n}</span><span>${x.tp} TP</span></div>`});
+  h+=`<p class="note">Sıranız: ${mi+1} / ${all.length}</p></div>`;
+  document.getElementById("pt").innerHTML=h}
+document.getElementById("pt").addEventListener("click",e=>{const c=e.target.closest("[data-c]"),b=e.target.closest("[data-b]"),k=e.target.closest("[data-k]"),K=S.bk;
+  if(c){const t=+c.dataset.c,r=CFG.tpRewards.find(x=>x.t===t);if(S.tp>=t&&!S.claimed.includes(t)){S.claimed.push(t);if(r.egg)S.egg+=r.egg;if(r.auri)S.auri+=r.auri;toast("Ödül alındı")}}
+  if(b){const a=b.dataset.b;
+    if(a==="start"&&!K.end&&K.stock<K.cap)K.end=now()+CFG.basketHours*3600000;
+    if(a==="star"){const z=starCost();if(K.stock>=K.cap)toast("Sepet kapasitesi dolu");else if(S.star<z)toast("Yeterli yıldız yok");else{S.star-=z;K.starOpens++;K.stock++}}
+    if(a==="cap"){const z=capCost();if(S.star<z)toast("Yeterli yıldız yok");else{S.star-=z;K.cap++}}
+    if(a==="use"&&K.stock>0&&S.tp>=S.gate){K.stock--;S.gate+=CFG.basketEvery;toast("Sepet kullanıldı")}}
+  if(k){const i=+k.dataset.k,t=S.tasks[i],r=t.res||"egg";if(S[r]>=t.need&&S.tp<S.gate){S[r]-=t.need;S.tp+=t.tp;S.tasks.splice(i,1);if(!S.tasks.length)S.tasks=[0,1,2].map(newTask)}}
+  save();render();renderT()});
+function renderCold(){const F=S.fm=S.fm||{n:0,done:false},c=CFG.farm1,full=S.pets.filter(p=>p&&state(p)==="full").length;
+  let h=`<div class="card"><p class="name">1. Başlangıç Çiftliği</p><p class="lv">Yalnızca Deve kuşu · ${c.need} slot</p><div class="bar"><i style="width:${F.n/c.need*100}%"></i></div><p class="note">${F.n} / ${c.need} hayvan eklendi</p><p class="note">Her hayvan: ${num(c.cost)} Auri öde, ${c.star} yıldız kazan. Tamamlayan herkese ${num(c.done)} Auri (sıralama yok).</p>`;
+  if(F.done)h+=`<p class="note"><b>Tamamlandı.</b></p>`;
+  else h+=`<p class="note">Elinizdeki full Deve kuşu: ${full}</p><button class="go" data-f="add" ${full&&S.auri>=c.cost?"":"disabled"}>Çiftliğe ekle · ${num(c.cost)} Auri</button>${full&&S.auri<c.cost?`<p class="note">Yeterli Auri yok.</p>`:""}`;
+  h+=`</div>`;
+  [["2. Vadi Çiftliği","Deve kuşu, Lama, Midilli"],["3. Yayla Çiftliği","Deve kuşu, Lama, Midilli"],["4. Bozkır Çiftliği","Deve kuşu, Lama, Midilli, At"],["5. Efsane Çiftliği","Deve kuşu, Lama, Midilli, At"]].forEach(f=>{h+=`<div class="card" style="opacity:.6"><p class="name">${f[0]}</p><p class="lv">${f[1]}</p><p class="note">İlk tamamlayanlara sıralamalı ödül. Bu prototipte henüz yok (Lama, Midilli ve At gerekir).</p></div>`});
+  document.getElementById("pc").innerHTML=h}
+document.getElementById("pc").addEventListener("click",e=>{if(!e.target.closest("[data-f]"))return;const c=CFG.farm1,F=S.fm=S.fm||{n:0,done:false},i=S.pets.findIndex(p=>p&&state(p)==="full");
+  if(i<0||S.auri<c.cost||F.done)return;
+  S.auri-=c.cost;S.star+=c.star;S.pets[i]=S.queue.shift()||null;F.n++;
+  if(F.n>=c.need){F.done=true;S.auri+=c.done;toast("Çiftlik tamamlandı: +"+num(c.done)+" Auri")}else toast("+"+c.star+" yıldız");
+  save();render();renderC()});
+let fv=0;
+const RANKS=[["1.",1500],["2-3.",1000],["4-5.",600],["6-10.",400],["11-25.",300],["26-50.",250],["51-100.",200]];
+function dots(n,t){let s="";for(let k=0;k<t;k++)s+=`<i class="dt ${k<n?"on":""}"></i>`;return `<div class="dts">${s}</div>`}
+function rew(a,st){return `<div class="rw">${a?`<span class="ra">${num(a)} Auri</span>`:""}${st?`<span class="rs">★ ${num(st)}</span>`:""}</div>`}
+function renderC(){if(fv===2){renderF2();return}const F=S.fm=S.fm||{n:0,done:false},c=CFG.farm1,tot=c.star*c.need;let h="";
+  if(fv===1){const full=countFull(isO);
+    h+=`<button class="go alt back" data-o="0">‹ Çiftlikler</button><div class="card tc"><button class="inf" data-r="1" aria-label="Bilgi">i</button><p class="lv">TAMAMLAMA ÖDÜLÜ</p><p class="name">Şimdiye kadar 3.661 oyuncu aldı</p>${rew(c.done,0)}</div>`;
+    h+=`<div class="card pcc"><div class="ic">${bird()}</div><div><p class="name">1. Başlangıç Çiftliği</p><p class="lv">${F.n} / ${c.need} eklendi · elinizde ${full} full</p><div class="bar" style="margin:4px 0 0"><i style="width:${F.n/c.need*100}%"></i></div></div></div><div class="fgrid">`;
+    for(let k=0;k<c.need;k++)h+=k<F.n?`<div class="fx on"><p class="lv">DEVE KUŞU</p>${bird()}<div class="rw"><span class="rs">★ ${c.star} alındı</span></div></div>`:`<button class="fx" data-s="${k}" aria-label="Slot ${k+1}"><p class="lv">DEVE KUŞU [LV 5]</p><span class="ghost">${bird()}</span><div class="rw"><span class="ra">${num(c.cost)} Auri</span><span class="rs">★ ${c.star}</span></div></button>`;
+    h+=`</div>`}
+  else{h+=`<button class="card cf" data-o="1"><div class="ic">${bird()}</div><div><p class="name">1. Başlangıç Çiftliği</p><p class="lv">Yalnızca Deve kuşu · ${F.done?"Tamamlandı":F.n+" / "+c.need}</p>${dots(F.n,c.need)}${rew(c.done,tot)}</div></button>`;
+    h+=f2card();[["3. Yayla Çiftliği","Deve kuşu, Lama, Midilli"],["4. Bozkır Çiftliği","Deve kuşu, Lama, Midilli, At"],["5. Efsane Çiftliği","Deve kuşu, Lama, Midilli, At"]].forEach(f=>{h+=`<button class="card cf" data-q="1" style="opacity:.7"><div class="ic">${bird()}</div><div><p class="name">${f[0]}</p><p class="lv">${f[1]}</p>${dots(0,10)}<div class="rw"><span class="rs">★ 1.500</span><span class="lv" style="margin:0">1. sıra · dokunun</span></div></div></button>`})}
+  document.getElementById("pc").innerHTML=h}
+document.getElementById("pc").addEventListener("click",e=>{
+  if(e.target.closest("[data-r]")){dlg.innerHTML=`<h2>Tamamlama ödülü</h2><p>1. çiftliği tamamlayan <b>herkes ${num(CFG.farm1.done)} Auri</b> alır, sıralama yoktur. Her hayvan eklemede ayrıca ${CFG.farm1.star} yıldız verilir.</p><div class="opts"><button class="go alt" data-m="x">Kapat</button></div>`;dlg.showModal()}
+  if(e.target.closest("[data-q]")){dlg.innerHTML=`<h2>İlk gelen alır</h2><p class="note">Çiftliği ne kadar erken tamamlarsanız ödül o kadar büyüktür. Değerler örnektir.</p>${RANKS.map(x=>`<div class="row rk"><span>${x[0]}</span><span></span><span class="rs">★ ${num(x[1])}</span></div>`).join("")}<div class="opts"><button class="go alt" data-m="x">Kapat</button></div>`;dlg.showModal()}});
+function renderC3(){const F=S.fm=S.fm||{n:0,done:false},c=CFG.farm1;let h="";
+  if(fv===1){const full=S.pets.filter(p=>p&&state(p)==="full").length;
+    h+=`<button class="go alt back" data-o="0">‹ Çiftlikler</button><div class="card"><p class="name">1. Başlangıç Çiftliği</p><p class="lv">Yalnızca Deve kuşu · ${F.n} / ${c.need}</p><div class="bar"><i style="width:${F.n/c.need*100}%"></i></div><p class="note">Her hayvan: ${num(c.cost)} Auri öde, ${c.star} yıldız kazan. Tamamlayınca herkese ${num(c.done)} Auri.</p>${F.done?`<p class="note"><b>Tamamlandı.</b></p>`:`<p class="note">Elinizdeki full Deve kuşu: ${full}</p>`}</div><div class="fgrid">`;
+    for(let k=0;k<c.need;k++)h+=k<F.n?`<div class="fs on">${bird()}</div>`:`<button class="fs" data-s="${k}" aria-label="Slot ${k+1}"><span class="ghost">${bird()}</span><b>+</b></button>`;
+    h+=`</div>`}
+  else{h+=`<button class="card" data-o="1" style="width:100%;text-align:left;cursor:pointer;color:inherit;font:inherit"><p class="name">1. Başlangıç Çiftliği</p><p class="lv">Yalnızca Deve kuşu · ${c.need} slot</p><div class="bar"><i style="width:${F.n/c.need*100}%"></i></div><p class="note">${F.done?"Tamamlandı":F.n+" / "+c.need+" hayvan eklendi"} · açmak için dokunun</p></button>`;
+    [["2. Vadi Çiftliği","Deve kuşu, Lama, Midilli"],["3. Yayla Çiftliği","Deve kuşu, Lama, Midilli"],["4. Bozkır Çiftliği","Deve kuşu, Lama, Midilli, At"],["5. Efsane Çiftliği","Deve kuşu, Lama, Midilli, At"]].forEach(f=>{h+=`<div class="card" style="opacity:.6"><p class="name">${f[0]}</p><p class="lv">${f[1]}</p><p class="note">İlk tamamlayanlara sıralamalı ödül. Bu prototipte henüz yok.</p></div>`})}
+  document.getElementById("pc").innerHTML=h}
+document.getElementById("pc").addEventListener("click",e=>{const o=e.target.closest("[data-o]"),s=e.target.closest("[data-s]");
+  if(o){fv=+o.dataset.o;renderC();window.scrollTo(0,0)}
+  if(s){const c=CFG.farm1,F=S.fm;if(F.done)return;if(countFull(isO)<1){toast("Full Deve kuşunuz yok");return}
+    dlg.innerHTML=`<h2>Çiftliğe ekle</h2><p>Full Deve kuşu bu slota eklenir ve sizden çıkar (HP'si de gider).</p><p><b>${num(c.cost)} Auri</b> öde, <b>${c.star} yıldız</b> kazan.</p><div class="opts"><button class="go" data-n="fadd">Ekle</button><button class="go alt" data-m="x">Vazgeç</button></div>`;dlg.showModal()}});
+dlg.addEventListener("click",e=>{if(e.target.dataset.n!=="fadd")return;const c=CFG.farm1,F=S.fm;
+  if(countFull(isO)<1||F.done){dlg.close();return}
+  if(S.auri<c.cost){toast("Yeterli Auri yok");dlg.close();return}
+  S.auri-=c.cost;S.star+=c.star;takeFull(isO,1);F.n++;dlg.close();
+  if(F.n>=c.need){F.done=true;S.auri+=c.done;toast("Çiftlik tamamlandı: +"+num(c.done)+" Auri")}else toast("+"+c.star+" yıldız");
+  save();render();renderC()});
+function renderBarnOld(){const B=CFG.barn,n=S.pets.filter(p=>isO(p)&&state(p)==="full").length;document.getElementById("barn").innerHTML=`<div class="card"><p class="name">Ahır</p><p class="lv">Deve kuşu → Lama</p><p class="note">${B.need} full Deve kuşu ve ${num(B.cost)} Auri verin, 1 Lama kazanın. Verdiğiniz hayvanların HP'si yeni hayvana geçer (XL). Süre yoktur.</p><p class="note">Full Deve kuşu: ${n} / ${B.need}</p><button class="go" data-b2="barn" ${n>=B.need&&S.auri>=B.cost?"":"disabled"}>Ahırı inşa et · ${num(B.cost)} Auri</button></div>`}
+document.getElementById("barn").addEventListener("click",e=>{if(!e.target.closest("[data-b2]"))return;const B=CFG.barn,idx=[];
+  S.pets.forEach((p,i)=>{if(isO(p)&&state(p)==="full"&&idx.length<B.need)idx.push(i)});
+  if(idx.length<B.need){toast("Yeterli full Deve kuşu yok");return}
+  if(S.auri<B.cost){toast("Yeterli Auri yok");return}
+  S.auri-=B.cost;let inh=0;idx.forEach(i=>{inh+=S.pets[i].hp+(S.pets[i].inh||0);S.pets[i]=null});
+  const l=newPet("l");l.inh=inh;S.queue.push(l);S.pets.forEach((p,k)=>{if(!p&&S.queue.length)S.pets[k]=S.queue.shift()});
+  save();render();toast("Lama kazandınız, "+num(inh)+" HP devredildi")});
+function renderBarn(){let h="";CFG.barns.forEach((B,k)=>{const n=countFull(p=>(p.type||"o")===B.from),F=CFG.types[B.from].name,Tn=CFG.types[B.to].name;h+=`<div class="card"><p class="name">Ahır</p><p class="lv">${B.label}</p><p class="note">${B.need} full ${F} ve ${num(B.cost)} Auri verin, 1 ${Tn} kazanın. HP'ler yeni hayvana geçer (XL). Süre yoktur.</p><p class="note">Full ${F}: ${n} / ${B.need}</p><button class="go" data-b3="${k}" ${n>=B.need&&S.auri>=B.cost?"":"disabled"}>Ahırı inşa et · ${num(B.cost)} Auri</button></div>`});h+=epicCard();document.getElementById("barn").innerHTML=h}
+document.getElementById("barn").addEventListener("click",e=>{const x=e.target.closest("[data-b3]");if(!x)return;const B=CFG.barns[+x.dataset.b3],pr=p=>(p.type||"o")===B.from;
+  if(countFull(pr)<B.need){toast("Yeterli full hayvan yok");return}
+  if(S.auri<B.cost){toast("Yeterli Auri yok");return}
+  S.auri-=B.cost;let inh=0;takeFull(pr,B.need).forEach(p=>{inh+=p.hp+(p.inh||0)});
+  const l=newPet(B.to);l.inh=inh;S.queue.push(l);S.pets.forEach((p,k)=>{if(!p&&S.queue.length)S.pets[k]=S.queue.shift()});
+  save();render();toast(CFG.types[B.to].name+" kazandınız, "+num(inh)+" HP devredildi")});
+CFG.f2=[...Array(6).fill({t:"o",ca:25000,rs:5}),...Array(4).fill({t:"l",ca:60000,rs:12}),...Array(2).fill({t:"l",xl:1,ca:60000,rs:20}),...Array(2).fill({t:"m",cs:60,ra:80000})]; // 6 Deve kusu, 4 Lama, 2 XL Lama, 2 Midilli; rakamlar yer tutucu
+const TN={o:"DEVE KUŞU",l:"LAMA",m:"MİDİLLİ"};
+function typeArt(t){return t==="l"?lama():t==="m"?midilli():bird()}
+function rankStar(r){return r===1?1500:r<=3?1000:r<=5?600:r<=10?400:r<=25?300:r<=50?250:r<=100?200:0}
+function f2st(){return S.f2=S.f2||{f:[],done:false,rank:0}}
+function f2count(){return f2st().f.filter(Boolean).length}
+function f2pred(sl){return p=>(p.type||"o")===sl.t&&(!sl.xl||(p.inh||0)>0)}
+function f2pick(sl){return countFull(f2pred(sl))?1:-1}
+function f2card(){const n=f2count(),F=f2st();return `<button class="card cf" data-o="2"><div class="ic">${bird()}</div><div><p class="name">2. Vadi Çiftliği</p><p class="lv">Deve kuşu, Lama (2 XL), Midilli · ${F.done?"Tamamlandı":n+" / "+CFG.f2.length}</p>${dots(n,CFG.f2.length)}<div class="rw"><span class="rs">★ 1.500</span><span class="lv" style="margin:0">1. sıra</span></div></div></button>`}
+function renderF2(){const F=f2st(),n=f2count(),N=CFG.f2.length;
+  let h=`<button class="go alt back" data-o="0">‹ Çiftlikler</button><div class="card tc"><button class="inf" data-q="1" aria-label="Bilgi">i</button><p class="lv">İLK GELEN ALIR</p><p class="name">${F.done?"Sıranız: "+F.rank+". · ★ "+num(rankStar(F.rank)):"Şimdiye kadar 1.284 oyuncu tamamladı"}</p>${F.done?"":`<div class="rw"><span class="rs">★ 1.500</span></div>`}</div><div class="card pcc"><div class="ic">${bird()}</div><div><p class="name">2. Vadi Çiftliği</p><p class="lv">${n} / ${N} eklendi</p><div class="bar" style="margin:4px 0 0"><i style="width:${n/N*100}%"></i></div></div></div><div class="fgrid">`;
+  CFG.f2.forEach((s,k)=>{const lbl=TN[s.t]+(s.xl?" XL":"")+" [LV 5]";
+    if(F.f[k])h+=`<div class="fx on"><p class="lv">${lbl}</p>${typeArt(s.t)}<div class="rw"><span class="rs">Eklendi</span></div></div>`;
+    else h+=`<button class="fx" data-s2="${k}"><p class="lv">${lbl}</p><span class="ghost">${typeArt(s.t)}</span><div class="rw">${s.cs?`<span class="rs">−★ ${s.cs}</span><span class="ra">+${num(s.ra)} Auri</span>`:`<span class="ra">−${num(s.ca)} Auri</span><span class="rs">+★ ${s.rs}</span>`}</div></button>`});
+  document.getElementById("pc").innerHTML=h+`</div>`}
+document.getElementById("pc").addEventListener("click",e=>{const b=e.target.closest("[data-s2]");if(!b)return;const k=+b.dataset.s2,s=CFG.f2[k],F=f2st();if(F.f[k]||F.done)return;
+  if(f2pick(s)<0){toast("Uygun full hayvan yok"+(s.xl?" (XL gerekir)":""));return}
+  dlg.innerHTML=`<h2>Çiftliğe ekle</h2><p>Uygun hayvan bu slota eklenir ve sizden çıkar (HP'si de gider).</p><p>${s.cs?`<b>★ ${s.cs}</b> öde, <b>${num(s.ra)} Auri</b> kazan.`:`<b>${num(s.ca)} Auri</b> öde, <b>★ ${s.rs}</b> kazan.`}</p><div class="opts"><button class="go" data-n="f2add" data-k="${k}">Ekle</button><button class="go alt" data-m="x">Vazgeç</button></div>`;dlg.showModal()});
+dlg.addEventListener("click",e=>{if(e.target.dataset.n!=="f2add")return;const k=+e.target.dataset.k,s=CFG.f2[k],F=f2st(),i=f2pick(s);
+  if(i<0||F.f[k]||F.done){dlg.close();return}
+  if(s.cs){if(S.star<s.cs){toast("Yeterli yıldız yok");dlg.close();return}S.star-=s.cs;S.auri+=s.ra}
+  else{if(S.auri<s.ca){toast("Yeterli Auri yok");dlg.close();return}S.auri-=s.ca;S.star+=s.rs}
+  takeFull(f2pred(s),1,true);F.f[k]=true;dlg.close();
+  if(f2count()>=CFG.f2.length){F.done=true;F.rank=1+Math.floor(Math.pow(Math.random(),2)*150);const st=rankStar(F.rank);S.star+=st;toast("Çiftlik tamamlandı: "+F.rank+". sıra"+(st?", ★ "+num(st):""))}else toast("Eklendi");
+  save();render();renderC()});
+function epicCard(){const E=CFG.epic,n=fullMid();return `<div class="card"><p class="name">Epik deneme</p><p class="lv">Midilli → At (şansa bağlı)</p><p class="note">${E.need} full Midilli ve ${num(E.cost)} Auri ile çarkı çevirin. Başarılı merge dilimi %${E.chance*100} (yer tutucu). Başarılı olursa Midilli'ler harcanır ve 1 At kazanırsınız (HP'ler devredilir). Başarısızsa Midilli'leriniz kalır, küçük bir teselli ödülü alırsınız.</p><p class="note">Full Midilli: ${n} / ${E.need}</p><button class="go" data-w="1" ${n>=E.need&&S.auri>=E.cost?"":"disabled"}>Çevir · ${num(E.cost)} Auri</button></div>`}
+document.getElementById("barn").addEventListener("click",e=>{if(!e.target.closest("[data-e]"))return;const E=CFG.epic,idx=[];
+  S.pets.forEach((p,i)=>{if(p&&p.type==="m"&&state(p)==="full"&&idx.length<E.need)idx.push(i)});
+  if(idx.length<E.need){toast("Yeterli full Midilli yok");return}
+  if(S.auri<E.cost){toast("Yeterli Auri yok");return}
+  S.auri-=E.cost;
+  if(Math.random()<E.chance){let inh=0;idx.forEach(i=>{inh+=S.pets[i].hp+(S.pets[i].inh||0);S.pets[i]=null});const l=newPet("a");l.inh=inh;S.queue.push(l);S.pets.forEach((p,k)=>{if(!p&&S.queue.length)S.pets[k]=S.queue.shift()});toast("At kazandınız! "+num(inh)+" HP devredildi")}
+  else{const r=Math.floor(Math.random()*3);if(r===0){S.auri+=5000;toast("Olmadı. Teselli: 5.000 Auri")}else if(r===1){const k=["egg","yun","kimiz"][Math.floor(Math.random()*3)];S[k]=(S[k]||0)+10;toast("Olmadı. Teselli: 10 "+RN[k])}else{S.tp=(S.tp||0)+10;toast("Olmadı. Teselli: 10 TP")}}
+  save();render();if(page==="t")renderT()});
+const WH=[{n:"Turnuva puanı",s:"TP",c:"#7aa7e0",f:()=>{S.tp=(S.tp||0)+10;return "+10 TP"}},{n:"Auri",s:"Auri",c:"#e0b84d",f:()=>{S.auri+=5000;return "+5.000 Auri"}},{n:"Yıldız",s:"★",c:"#9a86e6",f:()=>{S.star+=1;return "+1 yıldız"}},{n:"Yumurta",s:"Yumurta",c:"#d9b878",f:()=>{S.egg+=10;return "+10 yumurta"}},{n:"Yün",s:"Yün",c:"#c9bfa9",f:()=>{S.yun=(S.yun||0)+10;return "+10 yün"}},{n:"Nal",s:"Nal",c:"#9aa7b5",f:()=>{S.nal=(S.nal||0)+10;return "+10 nal"}},{n:"Başarılı merge",s:"MERGE",c:"#5fb36a",win:1}];
+function wheelSegs(){const ch=CFG.epic.chance;let a=0;return WH.map(s=>{const w=s.win?ch:(1-ch)/6,d=w*360,o={...s,w,a0:a,a1:a+d};a+=d;return o})}
+function wpt(a,r){const t=(a-90)*Math.PI/180;return [100+r*Math.cos(t),104+r*Math.sin(t)]}
+function wheelHtml(){const segs=wheelSegs();let g="";segs.forEach(s=>{const d=s.a1-s.a0;if(d<0.01)return;if(d>=359.9)g+=`<circle cx="100" cy="104" r="88" fill="${s.c}"/>`;else{const p0=wpt(s.a0,88),p1=wpt(s.a1,88);g+=`<path d="M100 104L${p0[0]} ${p0[1]}A88 88 0 ${d>180?1:0} 1 ${p1[0]} ${p1[1]}Z" fill="${s.c}" stroke="#fff" stroke-width="1"/>`}
+    if(d>26&&d<359){const m=wpt((s.a0+s.a1)/2,58);g+=`<text x="${m[0]}" y="${m[1]}" font-size="9" font-weight="700" fill="#1b1b1b" text-anchor="middle" dominant-baseline="middle">${s.s}</text>`}});
+  return `<svg viewBox="0 0 200 200" style="width:100%;display:block"><g id="wh" style="transform-origin:100px 104px;transition:transform 3.6s cubic-bezier(.12,.7,.1,1)">${g}</g><circle cx="100" cy="104" r="8" fill="var(--ink)"/><path d="M90 2L110 2L100 22Z" fill="var(--ink)"/></svg><div class="lg">${segs.map(s=>`<div><i style="background:${s.c}"></i>${s.n}<b>%${(s.w*100).toFixed(s.w<0.01?3:1)}</b></div>`).join("")}</div>`}
+function fullMid(){return countFull(p=>p.type==="m")}
+function canSpin(){return fullMid()>=CFG.epic.need&&S.auri>=CFG.epic.cost}
+function openWheel(){dlg.innerHTML=`<h2>Epik çarkı</h2>${wheelHtml()}<p class="note" id="wres">${CFG.epic.need} full Midilli gerekir (elinizde ${fullMid()}). Başarılı merge gelirse Midilli'ler harcanır ve 1 At kazanırsınız.</p><div class="opts"><button class="go" id="spinBtn" data-n="spin" ${canSpin()?"":"disabled"}>Çevir · ${num(CFG.epic.cost)} Auri</button><button class="go alt" data-m="x">Kapat</button></div>`;dlg.showModal()}
+document.getElementById("barn").addEventListener("click",e=>{if(e.target.closest("[data-w]"))openWheel()});
+dlg.addEventListener("close",()=>{render();if(page==="t")renderT()});
+dlg.addEventListener("click",e=>{if(e.target.dataset.n!=="spin")return;const E=CFG.epic;if(!canSpin()){toast("Yeterli full Midilli ya da Auri yok");return}
+  S.auri-=E.cost;const segs=wheelSegs();let r=Math.random(),pick=segs.find(s=>s.w>0)||segs[0],acc=0;for(const s of segs){acc+=s.w;if(r<acc&&s.w>0){pick=s;break}}
+  let txt;if(pick.win){let inh=0;takeFull(p=>p.type==="m",E.need).forEach(p=>{inh+=p.hp+(p.inh||0)});const l=newPet("a");l.inh=inh;S.queue.push(l);S.pets.forEach((p,k)=>{if(!p&&S.queue.length)S.pets[k]=S.queue.shift()});txt="Başarılı merge! 1 At kazandınız, "+num(inh)+" HP devredildi."}
+  else txt="Teselli: "+pick.f()+".";
+  save();const wh=document.getElementById("wh"),btn=document.getElementById("spinBtn");btn.disabled=true;
+  wh.style.transition="none";wh.style.transform="rotate(0deg)";wh.getBoundingClientRect();
+  wh.style.transition="transform 3.6s cubic-bezier(.12,.7,.1,1)";wh.style.transform="rotate("+(360*6+360-(pick.a0+pick.a1)/2)+"deg)";
+  document.getElementById("wres").textContent="Çark dönüyor...";
+  setTimeout(()=>{const w=document.getElementById("wres");if(w)w.textContent=pick.n+": "+txt;const b=document.getElementById("spinBtn");if(b)b.disabled=!canSpin();render()},3700)});
+function fillSlots(){S.pets.forEach((p,k)=>{if(!p&&S.queue.length)S.pets[k]=S.queue.shift()})}
+function countFull(pred){return S.pets.filter(p=>p&&state(p)==="full"&&pred(p)).length+(S.dep||[]).filter(pred).length}
+function takeFull(pred,n,xlLast){const c=[];S.pets.forEach((p,i)=>{if(p&&state(p)==="full"&&pred(p))c.push({p,i,d:0})});(S.dep||[]).forEach((p,i)=>{if(pred(p))c.push({p,i,d:1})});
+  if(xlLast)c.sort((a,b)=>((a.p.inh||0)>0)-((b.p.inh||0)>0));
+  const pick=c.slice(0,n);pick.filter(x=>x.d).map(x=>x.i).sort((a,b)=>b-a).forEach(i=>S.dep.splice(i,1));pick.filter(x=>!x.d).forEach(x=>{S.pets[x.i]=null});fillSlots();return pick.map(x=>x.p)}
+function acc(p){return Math.min(CFG.depot.maxH,Math.max(0,(now()-(p.since||now()))/3600000))*rateOf(p.type||"o")}
+function capCost2(){const n=S.depCap-CFG.depot.cap,L=CFG.depot.capCosts;return n<L.length?L[n]:L[L.length-1]+(n-L.length+1)*40}
+function renderDep(){const D=CFG.depot,n=S.dep.length;let tot=0,rows="";
+  S.dep.forEach((p,i)=>{tot+=acc(p);rows+=`<div class="row dpr"><span class="ic">${art(p)}</span><span>${T(p).name}${p.inh?` <span class="xl">XL</span>`:""}<br><small class="note">+<span data-acc="${i}">${num(Math.floor(acc(p)))}</span> Auri birikti · ${num(Math.round(rateOf(p.type||"o")))}/saat</small></span></div>`});
+  document.getElementById("dep").innerHTML=`<div class="card"><p class="name">Depo</p><p class="lv">${n} / ${S.depCap} hayvan · pasif Auri (${D.maxH} saate kadar birikir)</p>${rows||`<p class="note">Depo boş. Full bir hayvanı yıldız ödeyerek buraya alabilirsiniz. Depodaki hayvanlar çiftlik ve ahır için de sayılır.</p>`}<button class="go" data-d="col" id="colBtn" ${tot>=1?"":"disabled"}>Topla · ${num(Math.floor(tot))} Auri</button><button class="go alt" data-d="cap">Depoyu genişlet · ★ ${capCost2()}</button></div>`}
+function updDep(){let tot=0;S.dep.forEach((p,i)=>{tot+=acc(p);const e=document.querySelector(`[data-acc="${i}"]`);if(e)e.textContent=num(Math.floor(acc(p)))});const b=document.getElementById("colBtn");if(b){b.textContent="Topla · "+num(Math.floor(tot))+" Auri";b.disabled=tot<1}}
+function toDep(i){const p=S.pets[i];if(!p||state(p)!=="full")return;const c=CFG.depot.star[p.type||"o"];if(S.dep.length>=S.depCap){toast("Depo dolu");return}if(S.star<c){toast("Yeterli yıldız yok");return}
+  S.star-=c;p.since=now();S.dep.push(p);S.pets[i]=null;fillSlots();save();render();toast("Depoya alındı")}
+document.getElementById("dep").addEventListener("click",e=>{const b=e.target.closest("[data-d]");if(!b)return;
+  if(b.dataset.d==="col"){let t=0;S.dep.forEach(p=>{t+=acc(p);p.since=now()});S.auri+=Math.floor(t);toast("+"+num(Math.floor(t))+" Auri")}
+  if(b.dataset.d==="cap"){const c=capCost2();if(S.star<c)toast("Yeterli yıldız yok");else{S.star-=c;S.depCap++}}
+  save();render()});
+function renderMk(){const R=CFG.recipe,ok=!S.craft&&S.egg>=R.egg&&(S.yun||0)>=R.yun&&(S.kimiz||0)>=R.kimiz&&(S.nal||0)>=R.nal&&S.auri>=R.auri;
+  document.getElementById("mk").innerHTML=`<div class="card"><p class="name">Mitik tarifi</p><p class="lv">${S.craft?"Tarif hakkınız kullanıldı":"Her oyuncu yalnızca 1 Mitik üretebilir"}</p>${S.craft?`<p class="note">Üretilen: <b>${S.craft}</b>. Diğer Mitik’ler yalnızca etkinlik ve özel turnuva ödülüyle gelir.</p>`:`<p class="note">Gerekenler: ${num(R.egg)} yumurta (${num(S.egg)}), ${num(R.yun)} yün (${num(S.yun||0)}), ${num(R.kimiz)} kımız (${num(S.kimiz||0)}), ${num(R.nal)} nal (${num(S.nal||0)}), ${num(R.auri)} Auri. Yıldız gerekmez, bekleme yoktur.</p><button class="go" data-mk="1" ${ok?"":"disabled"}>Mitik seç ve üret</button>`}</div>`}
+document.getElementById("mk").addEventListener("click",e=>{if(!e.target.closest("[data-mk]"))return;
+  dlg.innerHTML=`<h2>Mitik seç</h2><p class="note">Seçim kalıcıdır.</p><div class="opts">${CFG.mk.map(m=>`<button class="go alt" data-mkp="${m.k}" style="display:flex;align-items:center;gap:10px;text-align:left"><span class="mkb">${mythicArt(m.k)}</span><span>${m.n}<br><small>Özel kaynak: ${m.res}</small></span></button>`).join("")}<button class="go alt" data-m="x">Vazgeç</button></div>`;dlg.showModal()});
+dlg.addEventListener("click",e=>{const b=e.target.closest("[data-mkp]"),g=e.target.closest("[data-mkg]");
+  if(b){const m=CFG.mk.find(x=>x.k===b.dataset.mkp);dlg.innerHTML=`<h2>${m.n}</h2><div class="mkb" style="text-align:center">${mythicArt(m.k)}</div><p>Özel kaynağı: <b>${m.res}</b>. <b>Bu seçim kalıcıdır</b>, başka Mitik üretemezsiniz (etkinliklerden kazanılanlar etkilenmez).</p><div class="opts"><button class="go" data-mkg="${m.k}">Üret</button><button class="go alt" data-m="x">Vazgeç</button></div>`}
+  if(g){const R=CFG.recipe,m=CFG.mk.find(x=>x.k===g.dataset.mkg);
+    if(S.craft||S.egg<R.egg||(S.yun||0)<R.yun||(S.kimiz||0)<R.kimiz||(S.nal||0)<R.nal||S.auri<R.auri){toast("Tarif koşulları sağlanmıyor");dlg.close();return}
+    S.egg-=R.egg;S.yun-=R.yun;S.kimiz-=R.kimiz;S.nal-=R.nal;S.auri-=R.auri;S.craft=m.n;S.queue.push(newPet(m.k));fillSlots();save();dlg.close();render();toast(m.n+" üretildi")}});
+const RC={};
+function fullCost(t){const Y=CFG.types[t];if(Y.m){let tt=0,p0=0;Y.caps.forEach((cap,i)=>{tt+=((cap-p0)/Y.hp/50)*Y.m[i]*90;p0=cap});return tt}let tot=0,pv=0;Y.caps.forEach((cap,i)=>{const n=Math.ceil((cap-pv)/Y.hp),k=Y.cost[i];for(let c=0;c<n;c++)tot+=Math.min(k.max,Math.round(k.min*Math.pow(k.max/k.min,c/k.ramp)));pv=cap});return tot}
+function rateOf(t){return RC[t]||(RC[t]=fullCost(t)/(CFG.depot.payback*24))} // saatlik Auri = full yapma maliyeti / (geri donus gunu x 24)
+const RARN=p=>T(p).myth?"MİTİK":["COMMON","UNCOMMON","RARE","EPIC"][T(p).tier];
+let carX=0,carIdx=0;
+function cn(x){x=Math.floor(x||0);if(x>=1e6)return (x/1e6).toFixed(x>=1e7?0:1).replace(/\.0$/,"")+"M";if(x>=1e3)return (x/1e3).toFixed(x>=1e4?0:1).replace(/\.0$/,"")+"K";return String(x)}
+const IC={auri:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="#e0b84d"/><text x="12" y="16" text-anchor="middle" font-size="11" font-weight="800" fill="#6b4a00">A</text></svg>',star:'<svg viewBox="0 0 24 24"><path d="M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1L12 17l-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z" fill="#9a86e6"/></svg>',egg:'<svg viewBox="0 0 24 24"><path d="M12 3c-3.5 0-6 5.5-6 9.5a6 6 0 0 0 12 0C18 8.5 15.5 3 12 3z" fill="#e9d6a8" stroke="#b79a5a"/></svg>',yun:'<svg viewBox="0 0 24 24"><circle cx="8" cy="13" r="4" fill="#d8d0bd"/><circle cx="13" cy="10" r="5" fill="#e9e2d0"/><circle cx="17" cy="14" r="3.5" fill="#d8d0bd"/></svg>',kimiz:'<svg viewBox="0 0 24 24"><path d="M12 3c3 4.5 6 7.2 6 10.5a6 6 0 0 1-12 0C6 10.2 9 7.5 12 3z" fill="#f4efe3" stroke="#b9b09a"/></svg>',nal:'<svg viewBox="0 0 24 24" fill="none" stroke="#9aa7b5" stroke-width="3.2" stroke-linecap="round"><path d="M7 20V12a5 5 0 0 1 10 0v8"/></svg>',mk:'<svg viewBox="0 0 24 24"><path d="M12 2l2.2 7.8L22 12l-7.8 2.2L12 22l-2.2-7.8L2 12l7.8-2.2z" fill="#5fb36a"/></svg>'};
+function renderCar(){
+  let r=`<div title="Auri">${IC.auri}<b>${cn(S.auri)}</b></div><div title="Yıldız">${IC.star}<b>${cn(S.star)}</b></div><div title="Büyük yumurta">${IC.egg}<b>${cn(S.egg)}</b></div>`;
+  if(S.yun)r+=`<div title="Yün">${IC.yun}<b>${cn(S.yun)}</b></div>`;if(S.kimiz)r+=`<div title="Kımız">${IC.kimiz}<b>${cn(S.kimiz)}</b></div>`;if(S.nal)r+=`<div title="Nal">${IC.nal}<b>${cn(S.nal)}</b></div>`;
+  CFG.mk.forEach(m=>{if(S["r_"+m.k])r+=`<div title="${m.res}">${IC.mk}<b>${cn(S["r_"+m.k])}</b></div>`});
+  document.getElementById("res").innerHTML=r;
+  const sl=document.getElementById("slots"),items=[];S.pets.forEach((p,i)=>items.push(p?{p,i}:{i,e:1}));S.queue.forEach((p,j)=>items.push({p,j,q:1}));
+  let h="";items.forEach(it=>{
+    if(it.e){h+=`<div class="cc empty"><p class="name">Boş slot ${it.i+1}</p><p class="note">Hayvan kazanınca burada görünür.</p></div>`;return}
+    const p=it.p;
+    if(it.q){h+=`<div class="cc lockc"><div class="ct"><span>LVL ${p.level}</span><span>${RARN(p)}</span></div><div class="pet cart">${art(p)}</div><p class="note">Kilitli · sırada ${it.j+1}. hayvan</p><div class="lk">${LOCK}</div></div>`;return}
+    refresh(p);const st=state(p),seg=cap(p)-prev(p),pct=Math.min(100,(p.hp-prev(p))/seg*100);
+    const bub=st==="feed"?"BESLE · "+cost(p)+" Auri":st==="ready"?"Çiftşeşmeye hazır".replace("Çiftşeş","Çiftleş"):st==="mating"?"Çiftleşiyor":"Full";
+    const act=st==="ready"?`<button class="go" data-a="mate">${p.paid?"Eş bul":"Çiftleşme ücretini öde · "+CFG.mateFee[p.level-1]+" Auri"}</button>`:st==="full"?`<button class="go" data-a="dep">Depoya al · ★ ${CFG.depot.star[p.type||"o"]}</button>`:"";
+    h+=`<div class="cc" data-i="${it.i}"><div class="ct"><span>LVL ${p.level}${p.inh?` <span class="xl">XL</span>`:""}</span><span>${RARN(p)}</span></div><button class="pet cart" data-a="feed" aria-label="Besle">${art(p)}</button><div class="bub">${bub}</div><div class="bar"><i style="width:${pct}%"></i></div>${act}<p class="note" data-w="${it.i}">${noteText(p)}</p></div>`});
+  sl.innerHTML=h;sl.scrollLeft=carX;
+  document.getElementById("dots").innerHTML=items.map((it,k)=>`<i data-d="${k}" class="${k===carIdx?"on":""} ${it.q?"lk":""}"></i>`).join("")}
+document.getElementById("slots").addEventListener("scroll",()=>{const sl=document.getElementById("slots");carX=sl.scrollLeft;const c=sl.querySelector(".cc");if(!c)return;const k=Math.round(carX/(c.offsetWidth+12));if(k!==carIdx){carIdx=k;document.querySelectorAll("#dots i").forEach((d,n)=>d.classList.toggle("on",n===k))}});
+document.getElementById("dots").addEventListener("click",e=>{const d=e.target.closest("[data-d]");if(!d)return;const sl=document.getElementById("slots"),c=sl.querySelector(".cc");sl.scrollTo({left:(+d.dataset.d)*(c.offsetWidth+12),behavior:"smooth"})});
+function show(p){page=p;document.getElementById("pf").hidden=p!=="f";document.getElementById("pt").hidden=p!=="t";document.getElementById("pc").hidden=p!=="c";document.getElementById("pm").hidden=p!=="m";if(p==="m")document.getElementById("pm").innerHTML=`<div class="card" style="text-align:center;padding:36px 16px"><div class="ic" style="display:flex;justify-content:center">${LOCK}</div><p class="name" style="font-size:22px;margin-top:10px">Market</p><p class="lv">Yakında geliyor</p></div>`;document.querySelectorAll(".nav button").forEach(b=>b.classList.toggle("on",b.dataset.p===p));if(p==="t")renderT();if(p==="c")renderC();window.scrollTo(0,0)}
+document.querySelector(".nav").addEventListener("click",e=>{const b=e.target.closest("[data-p]");if(b)show(b.dataset.p)});
+const VER="v0.3 test";
+const TA="width:100%;margin-top:8px;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font:inherit";
+CFG.feedbackUser=""; // geri bildirimin gidecegi Telegram kullanici adi (ornek: "kullanici"), bos birakilirsa sadece secim listesi acilir
+function applyDev(){const d=document.querySelector("details");if(d)d.hidden=!S.dev}
+function openTG(u){const w=window.Telegram&&window.Telegram.WebApp;if(w&&w.openTelegramLink)w.openTelegramLink(u);else window.open(u,"_blank")}
+function renderSet(){document.getElementById("set").innerHTML=`<div class="card"><p class="name">Ayarlar ve geri bildirim</p><p class="note">Sürüm ${VER} · prototip, veriler yalnızca bu cihazda</p><div class="opts"><button class="go" data-x="fb0">Sorun bildir / geri bildirim</button><button class="go alt" data-x="exp">İlerlemeyi dışa aktar</button><button class="go alt" data-x="imp0">İlerlemeyi içe aktar</button><button class="go alt" data-x="rst0">Sıfırla</button></div></div>`}
+document.addEventListener("click",e=>{const b=e.target.closest("[data-x]");if(!b)return;const a=b.dataset.x;
+  if(a==="fb0"){dlg.innerHTML=`<h2>Geri bildirim</h2><p class="note">Ne gördünüz, ne anlamadınız, ne hatalı çalıştı? Yazın, Telegram’da gönderin.${CFG.feedbackUser?` Gönderilecek kişi: <b>@${CFG.feedbackUser}</b>.`:""}</p><textarea id="fbt" rows="5" style="${TA}"></textarea><div class="opts"><button class="go" data-x="fb">Telegram’da gönder</button><button class="go alt" data-m="x">Vazgeç</button></div>`;dlg.showModal()}
+  if(a==="fb"){const n=(document.getElementById("fbt").value||"").trim(),pn={f:"Çiftlik",t:"Turnuva",c:"Çiftlikler",m:"Market"}[page];
+    const t=`[Animal Farm ${VER}] Ekran: ${pn}\n${n||"(not yazılmadı)"}\n— Auri ${num(S.auri)}, yıldız ${num(S.star)}, hayvan ${S.pets.filter(Boolean).length+S.dep.length}`;
+    const u="https://t.me/share/url?url="+encodeURIComponent(location.href.split("#")[0]||"https://t.me")+"&text="+encodeURIComponent(t);dlg.close();openTG(u)}
+  if(a==="exp"){const code=btoa(unescape(encodeURIComponent(JSON.stringify(S))));dlg.innerHTML=`<h2>İlerleme kodu</h2><p class="note">Bu kodu saklayın. Başka cihazda “İçe aktar” ile yapıştırın.</p><textarea id="expt" readonly rows="5" style="${TA}">${code}</textarea><div class="opts"><button class="go" data-x="cp">Kopyala</button><button class="go alt" data-m="x">Kapat</button></div>`;dlg.showModal()}
+  if(a==="cp"){const t=document.getElementById("expt");t.select();try{navigator.clipboard.writeText(t.value)}catch(err){try{document.execCommand("copy")}catch(e2){}}toast("Kopyalandı")}
+  if(a==="imp0"){dlg.innerHTML=`<h2>İlerlemeyi içe aktar</h2><p class="note">Dikkat: mevcut ilerlemeniz silinir.</p><textarea id="impt" rows="5" style="${TA}"></textarea><div class="opts"><button class="go" data-x="imp">İçe aktar</button><button class="go alt" data-m="x">Vazgeç</button></div>`;dlg.showModal()}
+  if(a==="imp"){try{const o=JSON.parse(decodeURIComponent(escape(atob(document.getElementById("impt").value.trim()))));if(!o||!o.pets)throw 0;S=o;S.queue=S.queue||[];save();dlg.close();render();toast("İçe aktarıldı")}catch(err){toast("Kod geçersiz")}}
+  if(a==="rst0"){dlg.innerHTML=`<h2>Sıfırla</h2><p>Tüm ilerlemeniz silinir. Emin misiniz?</p><div class="opts"><button class="go" data-x="rst">Evet, sıfırla</button><button class="go alt" data-m="x">Vazgeç</button></div>`;dlg.showModal()}
+  if(a==="rst"){S=fresh();S.seen=true;save();dlg.close();render();toast("Sıfırlandı")}
+});
+const unl={n:0,t:0};
+document.querySelector(".hp").addEventListener("click",()=>{unl.n++;clearTimeout(unl.t);unl.t=setTimeout(()=>{unl.n=0},2500);if(unl.n>=5){unl.n=0;S.dev=!S.dev;save();render();toast(S.dev?"Geliştirici modu açık":"Geliştirici modu kapalı")}});
+if(location.hash==="#dev")S.dev=true;
+renderSet();
+try{const w=window.Telegram&&window.Telegram.WebApp;if(w){w.ready();w.expand()}}catch(e){}
+render();setInterval(tick,1000);
+if(!S.seen){S.seen=true;save();dlg.innerHTML=`<h2>Animal Farm test sürümü</h2><p>Bu bir <b>prototip</b>. Çiftleşme eşleri, sıralama ve çiftlik yarışı simülasyondur, bildirim yoktur. İlerlemeniz yalnızca bu cihazda saklanır.</p><p>2-3 gün oynayın, günde en az 2 kez besleme yapın. Takıldığınız, anlamadığınız ya da hatalı gördüğünüz her şeyi ana sayfanın en altındaki <b>Sorun bildir</b> düğmesiyle gönderin.</p><p class="note">Sürüm ${VER}</p><div class="opts"><button class="go" data-m="x">Başla</button></div>`;dlg.showModal()}
+</script>
+</body>
+</html>
